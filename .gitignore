@@ -1,0 +1,11 @@
+# 빌드 디렉토리 무시
+/build/
+
+# MailSender.java 무시
+MailSender.java
+
+# DBConn.java 무시
+DBConn.java
+
+# 마이바티스 무시
+mybatis-config.xml
