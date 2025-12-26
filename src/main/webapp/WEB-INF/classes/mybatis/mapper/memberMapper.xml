@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.haruclass.mapper.MemberMapper">
+	<select id="loginMember" parameterType="map" resultType="com.haruclass.model.MemberDTO">
+		SELECT memberIdx, m1.userId, userPwd, userName, userLevel,
+		    profile_photo, register_date, modify_date
+		  FROM member1 m1
+		  LEFT OUTER JOIN member2 m2 on m1.userId = m2.userId
+		 WHERE m1.userId = #{userId} AND userPwd = #{userPwd} AND enabled = 1 
+	</select>
+
+	<insert id="insertMember1" parameterType="com.haruclass.model.MemberDTO">
+	 INSERT INTO MEMBER1 (
+                          memberIdx,
+                          userId,
+                          userPwd,
+                          userName,
+                          enabled,
+                          userLevel,
+                          register_date,
+                          modify_date
+                         ) VALUES (
+                                   member_seq.NEXTVAL,
+                                   #{userId},
+                                   #{userPwd},
+                                   #{userName},
+                                   1,
+                                   1,
+                                   SYSDATE,
+                                   SYSDATE
+                                  )
+	</insert>
+
+	<insert id="insertMember2" parameterType="com.haruclass.model.MemberDTO">
+     INSERT INTO MEMBER2 (
+                          userId,
+                          email,
+                          birth,
+                          tel,
+                          profile_photo,
+                          zip,
+                          addr1,
+                          addr2
+                        ) VALUES (
+                                  #{userId},
+                                  #{email},
+                                  TO_DATE(#{birth}, 'YYYY-MM-DD'),
+                                  #{tel},
+                                  #{profile_photo, jdbcType=VARCHAR},
+                                  #{zip, jdbcType=VARCHAR},
+                                  #{addr1, jdbcType=VARCHAR},
+                                  #{addr2, jdbcType=VARCHAR}
+                                 )
+	</insert>	
+	
+</mapper>

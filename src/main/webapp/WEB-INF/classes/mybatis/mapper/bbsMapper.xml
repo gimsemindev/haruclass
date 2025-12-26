@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.haruclass.mapper.BoardMapper">
+
+   <!-- 검색 조건 SQL -->
+   <sql id="where-list">
+      <choose>
+         <when test="schType == 'all'">
+            ( INSTR(subject, #{kwd}) &gt; 0
+            OR INSTR(content,
+            #{kwd}) &gt; 0 )
+         </when>
+         <when test="schType == 'reg_date'">
+            ( TO_CHAR(reg_date, 'YYYYMMDD') = #{kwd}
+            OR
+            TO_CHAR(reg_date, 'YYYY-MM-DD') = #{kwd} )
+         </when>
+         <otherwise>
+            INSTR(${schType}, #{kwd}) &gt; 0
+         </otherwise>
+      </choose>
+   </sql>
+
+   <!-- 글 등록 -->
+   <insert id="insertBoard" parameterType="com.haruclass.model.BoardDTO">
+      INSERT INTO bbs(
+      num,
+      userId, subject, content,
+      hitCount, reg_date, block
+      )
+      VALUES (
+      bbs_seq.NEXTVAL,
+      #{userId},
+      #{subject},
+      #{content},
+      0,
+      SYSDATE,
+      0
+      )
+   </insert>
+
+   <!-- 글 개수 -->
+   <select id="dataCount" parameterType="map" resultType="Integer">
+      SELECT NVL(COUNT(*),0)
+      FROM bbs b
+      JOIN member1 m ON b.userId = m.userId
+      <where>
+         <if test="kwd != null and kwd != ''">
+            <include refid="where-list" />
+         </if>
+      </where>
+   </select>
+
+   <!-- 글 리스트 -->
+   <select id="listBoard" parameterType="map"
+      resultType="com.haruclass.model.BoardDTO">
+      SELECT num, userName, subject, hitCount,
+      TO_CHAR(reg_date,
+      'YYYY-MM-DD') reg_date
+      FROM bbs b
+      JOIN member1 m ON b.userId = m.userId
+      <where>
+         <if test="kwd != null and kwd != ''">
+            <include refid="where-list" />
+         </if>
+         AND block = 0
+      </where>
+      ORDER BY num DESC
+      OFFSET #{offset} ROWS FETCH FIRST #{size} ROWS ONLY
+   </select>
+
+   <select id="findById" parameterType="Long"
+      resultType="com.haruclass.model.BoardDTO">
+      SELECT num, b.userId, userName, subject, content, reg_date,
+      hitCount, block
+      FROM bbs b
+      JOIN member1 m on b.userId = m.userId
+      WHERE
+      b.num = #{num} AND block = 0
+   </select>
+
+   <update id="updateHitCount" parameterType="Long">
+      UPDATE bbs SET
+      hitCount = hitCount+1
+      WHERE num = #{num}
+   </update>
+
+   <select id="findByPrev" parameterType="map"
+      resultType="com.haruclass.model.BoardDTO">
+      SELECT num, subject
+      FROM bbs b
+      JOIN member1 m ON b.userId = m.userId
+      <where>
+         <if test="kwd != null and kwd !='' ">
+            <include refid="where-list"></include>
+         </if>
+         AND ( num &gt; ${num})
+         AND block = 0
+      </where>
+      ORDER BY num ASC
+      FETCH FIRST 1 ROWS ONLY
+   </select>
+
+   <select id="findByNext" parameterType="map"
+      resultType="com.haruclass.model.BoardDTO">
+      SELECT num, subject
+      FROM bbs b
+      JOIN member1 m ON b.userId = m.userId
+      <where>
+         <if test="kwd != null and kwd !='' ">
+            <include refid="where-list"></include>
+         </if>
+         AND ( num &lt; ${num})
+         AND block = 0
+      </where>
+      ORDER BY num DESC
+      FETCH FIRST 1 ROWS ONLY
+   </select>
+   
+   <update id="updateBoard" parameterType="com.haruclass.model.BoardDTO">
+   		UPDATE bbs set subject = #{subject}, content = #{content}
+         WHERE num = #{num} AND userId = #{userId} 		   
+   </update>
+  
+   <delete id="deleteBoard" parameterType="map">
+   		DELETE FROM bbs
+  		<where>
+  			<choose>
+  				<when test="userLevel >= 51">
+  					num = #{num}	
+  				</when>
+  				<otherwise>
+  					num = #{num} AND userId = #{userId}
+  				</otherwise>
+  			</choose>
+  		</where> 		 
+   </delete>
+   
+</mapper>
